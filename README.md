@@ -48,7 +48,7 @@ Economic series publish on daily, weekly, or monthly cadences. Daily and weekly 
 ### Bounded Scoring (0 to 100)
 Indicators are normalized using a bounded linear ramp-up function between an economically defined safe baseline (`safe_level`) and a critical warning threshold (`threshold`):
 
-$$\text{score} = 100 \times \min\left[\max\left(\frac{x - \text{safe\_level}}{\text{threshold} - \text{safe\_level}}, 0\right), 1\right]$$
+$$\text{score} = 100 \times \min\left[\max\left(\frac{x - \text{safe\\_level}}{\text{threshold} - \text{safe\\_level}}, 0\right), 1\right]$$
 
 - **At or below `safe_level`:** The score is clamped to `0` (benign conditions).
 - **At or beyond `threshold`:** The score reaches `100` (signal active, `is_red = true`).
