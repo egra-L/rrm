@@ -1,0 +1,52 @@
+version: 2
+
+models:
+# -----------------------------------------------------------------------------
+# stg_fred__observations
+# -----------------------------------------------------------------------------
+  - name: stg_fred__observations
+    description: "Staging model combining the FRED indicator observation tables from the raw schema. USRECM is excluded; it is staged separately."
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - series_id
+              - observation_date
+
+    columns:
+      - name: series_id
+        description: "Identifier used by the source for the data series (e.g., ICSA in FRED)."
+        data_tests:
+          - not_null
+
+      - name: observation_date
+        data_tests:
+          - not_null
+          
+      - name: value
+        description: "Observed numeric value. Missing observations (represented as '.' in raw data) are cast to NULL."
+
+# -----------------------------------------------------------------------------
+# stg_fred__usrecm
+# -----------------------------------------------------------------------------
+  - name: stg_fred__usrecm
+    description: "US Recession flag as per NBER estimation."
+
+    columns:
+      - name: observation_date
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: is_recession
+        data_tests:
+          - not_null
+
+      - name: is_recession_peak
+        data_tests:
+          - not_null
+      
+      - name: is_recession_trough
+        data_tests:
+          - not_null

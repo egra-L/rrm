@@ -1,0 +1,34 @@
+name: 'r1m1'
+version: '1.0.0'
+
+profile: 'r1m1'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+seeds:
+  r1m1:
+    +schema: bronze
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# -----------------------------------------------------------------------------
+# MODELS
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+# -----------------------------------------------------------------------------
+
+models:
+  r1m1:
+    +materialized: table
+    staging:
+      +schema: bronze
+    intermediate:
+      +schema: silver
+    marts:
+      +schema: gold

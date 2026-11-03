@@ -1,0 +1,130 @@
+version: 2
+
+models:
+# -----------------------------------------------------------------------------
+# int_observations_monthly
+# -----------------------------------------------------------------------------
+  - name: int_observations_monthly
+    description: "Monthly spine of FRED observations, aggregated according to rules in indicator_registry."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - series_id
+              - month
+
+    columns:
+      - name: series_id
+        description: "Source series identifier."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('indicator_registry')
+                field: series_id
+
+      - name: month
+        description: "First day of the observation month (YYYY-MM-01)."
+        data_tests:
+          - not_null
+
+      - name: value
+        description: "Aggregated monthly value (e.g. monthly average for daily/weekly, or direct monthly value)."
+
+# -----------------------------------------------------------------------------
+# int_indicators_transformed
+# -----------------------------------------------------------------------------
+  - name: int_indicators_transformed
+    description: "Monthly indicator observations calculated by applying the registry's transformations (level, yoy_pct, pct_above_12m_min) to raw observations values."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - series_id
+              - month
+
+    columns:
+      - name: series_id
+        description: "Source series identifier."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('indicator_registry')
+                field: series_id
+
+      - name: month
+        description: "First day of the observation month (YYYY-MM-01)."
+        data_tests:
+          - not_null
+
+      - name: value
+        description: "Aggregated monthly value prior to transformation."
+
+      - name: transformed_value
+        description: "Transformed indicator value according to indicator_registry.transform (level, yoy_pct, or pct_above_12m_min). NULL during warm-up windows or when input observations are missing."
+
+# -----------------------------------------------------------------------------
+# int_indicators_scored
+# -----------------------------------------------------------------------------
+  - name: int_indicators_scored 
+    description: "Monthly normalized scores (0-100) derived from each indicator's transformed values"
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - series_id
+              - month
+
+    columns:
+      - name: series_id
+        description: "Source series identifier"
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('indicator_registry')
+                field: series_id
+    
+      - name: month
+        description: "First day of the observation month (YYYY-MM-01)."
+        data_tests:
+          - not_null
+      
+      - name: score
+        description: "Normalized indicator score, between 0 and 100."
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+
+      - name: is_red
+        description: "Indicator-based recession signal is active"
+
+# -----------------------------------------------------------------------------
+# int_recession_episodes
+# -----------------------------------------------------------------------------
+  - name: int_recession_episodes
+    description: "List of recession episodes since 1857 from NBER's estimate of turns in economic activity."
+
+    columns: 
+      - name: episode_id
+        description: "Identifier for recession episode"
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: peak_month
+        description: "Peak month just before start of recession."
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: trough_month
+        description: "Last month of recession before expansion begins."
+        data_tests:
+          - unique
+      
+      - name: durantion_months
+        description: "Duration in months of each recession episode."

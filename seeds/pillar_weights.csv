@@ -1,0 +1,5 @@
+pillar,weight
+yield_curve,0.25
+labor,0.25
+real_activity,0.25
+housing,0.25

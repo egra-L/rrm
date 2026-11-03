@@ -1,0 +1,43 @@
+# ==========================================
+# dbt Specific Files
+# ==========================================
+target/
+dbt_modules/
+dbt_packages/
+dbt_internal_packages/
+logs/
+*.log
+.user.yml
+
+# ==========================================
+# Security & Credentials
+# ==========================================
+.env
+*.env
+.envrc
+
+# ==========================================
+# Python & Environment (if running CLI locally)
+# ==========================================
+__pycache__/
+*.pyc
+venv/
+.venv/
+_venv/
+env/
+
+
+# ==========================================
+# IDE & OS Specific
+# ==========================================
+.idea/
+.vscode/
+.DS_Store
+
+# ==========================================
+# Other
+# ==========================================
+.agents
+*.duckdb
+*.ddb
+script_sources_gen*.py

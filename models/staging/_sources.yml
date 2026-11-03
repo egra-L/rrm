@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: raw
+    database: dwh
+    schema: raw
+    tables:
+      - name: fred_usrecm
+      - name: fred_t10y3m
+      - name: fred_sahmrealtime
+      - name: fred_icsa
+      - name: fred_indpro
+      - name: fred_permit

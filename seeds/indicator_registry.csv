@@ -1,0 +1,6 @@
+series_id,source,description,pillar,frequency,aggregation,transform,safe_level,threshold
+T10Y3M,fred,"10-Year Treasury Constant Maturity Minus 3-Month Treasury Constant Maturity",yield_curve,daily,avg,level,1,0
+SAHMREALTIME,fred,"Real-time Sahm Rule Recession Indicator",labor,monthly,none,level,0,0.5
+ICSA,fred,"Initial jobless claims",labor,weekly,avg,pct_above_12m_min,0,20
+INDPRO,fred,"FED's monthly index of industrial production",real_activity,monthly,none,yoy_pct,2,0
+PERMIT,fred,"New Privately-Owned Housing Units Authorized in Permit-Issuing Places (Total Units)",housing,monthly,none,yoy_pct,5,-10

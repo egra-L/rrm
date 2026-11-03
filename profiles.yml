@@ -1,0 +1,6 @@
+r1m1:
+  target: dwh
+  outputs:
+    dwh:
+      type: duckdb
+      path: dwh.ddb

@@ -1,0 +1,190 @@
+version: 2
+
+models:
+# -----------------------------------------------------------------------------
+# dim_indicators
+# -----------------------------------------------------------------------------
+  - name: dim_indicators
+    description: "Main attributes for each indicator built from the source series."
+
+    columns:
+      - name: series_id
+        description: "Series identifier used in source system."
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: source
+        description: "Source of series."
+        data_tests:
+          - not_null
+      
+      - name: description
+        description: "Name of series in source system."
+      
+      - name: pillar
+        description: "Category group to which the indicator belongs."
+        data_tests:
+          - not_null
+      
+      - name: transform
+        description: "Mathematical transformation applied to raw series data to obtain indicator values."
+        data_tests:
+          - not_null
+      
+      - name: threshold
+        description: "Value of the indicator beyond which high recession risk is signaled."
+        data_tests:
+          - not_null
+
+# -----------------------------------------------------------------------------
+# fct_indicators_monthly
+# -----------------------------------------------------------------------------
+  - name: fct_indicators_monthly
+    description: "Monthly indicator fact table combining raw monthly values, transformed values, normalized risk scores (0-100), red flags, and NBER recession indicators."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - series_id
+              - month
+
+    columns:
+      - name: series_id
+        description: "Series identifier referencing dim_indicator."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_indicators')
+                field: series_id
+
+      - name: month
+        description: "First day of the observation month (YYYY-MM-01)."
+        data_tests:
+          - not_null
+
+      - name: value
+        description: "Aggregated monthly value prior to transformation."
+
+      - name: transformed_value
+        description: "Transformed indicator value according to dim_indicator.transform."
+
+      - name: score
+        description: "Normalized recession risk score between 0 and 100."
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+
+      - name: is_red
+        description: "Flag indicating whether the indicator has reached its high-risk threshold (score >= 100)."
+
+      - name: is_recession
+        description: "NBER recession flag for the month (NULL if USRECM has not yet been published for the month)."
+        data_tests:
+          - not_null
+
+# -----------------------------------------------------------------------------
+# mart_indicator_backtest
+# -----------------------------------------------------------------------------
+  - name: mart_indicator_backtest
+    description: "Backtest evaluation of each indicator across historical NBER recession episodes ([-24m, +12m] window around peak), including hit flags and lead/lag months."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - series_id
+              - episode_id
+
+    columns:
+      - name: series_id
+        description: "Series identifier referencing dim_indicators."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_indicators')
+                field: series_id
+
+      - name: episode_id
+        description: "Recession episode identifier referencing int_recession_episodes."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_recession_episodes')
+                field: episode_id
+
+      - name: peak_month
+        description: "First month of the NBER recession episode."
+        data_tests:
+          - not_null
+
+      - name: trough_month
+        description: "Last month of the NBER recession episode."
+
+      - name: duration_months
+        description: "Duration of the recession episode in months."
+
+      - name: window_start
+        description: "Start of the evaluation window (24 months prior to peak_month)."
+        data_tests:
+          - not_null
+
+      - name: window_end
+        description: "End of the evaluation window (12 months after peak_month)."
+        data_tests:
+          - not_null
+
+      - name: is_hit
+        description: "True if at least one red month (is_red = true) occurred within [window_start, window_end]."
+        data_tests:
+          - not_null
+
+      - name: first_red_month
+        description: "First month with is_red = true inside [window_start, window_end] (NULL if no hit)."
+
+      - name: lead_months
+        description: "Months between first_red_month and peak_month (peak_month minus first_red_month). Positive means early warning; negative means lagging."
+
+# -----------------------------------------------------------------------------
+# mart_recession_risk_monthly
+# -----------------------------------------------------------------------------
+  - name: mart_recession_risk_monthly
+    description: "Monthly series of the composite recession risk score. Calculated as the weighted average of the available indicators' normalized scores. Includes dynamically generated columns for all available indicators."
+
+    columns:
+    - name: month 
+      description: "Month of composite score."
+      data_tests:
+        - unique
+        - not_null
+
+    - name: composite_score
+      description: "Composite score value."
+      data_tests:
+        - dbt_utils.accepted_range:
+            arguments:
+              min_value: 0
+              max_value: 100
+    
+    - name: n_indicators_scored
+      description: "Number of indicators with a valid score used in calculation."
+      data_tests:
+        - dbt_utils.expression_is_true:
+            arguments:
+              expression: ">= 0"
+    
+    - name: n_red
+      description: "Number of indicators signaling recession."
+      data_tests:
+        - dbt_utils.expression_is_true:
+            arguments:
+              expression: ">= 0"
+    
+    - name: is_recession
+      description: "NBER recession flag."
+      data_tests:
+        - not_null
